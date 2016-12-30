@@ -2,7 +2,8 @@ var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
-var Cart = require('./app/models/Cart');
+var cookieParser = require('cookie-parser');
+var cartRouter = require('./app/routers/cartRoutes');
 require('dotenv').config();
 
 var options = {
@@ -23,76 +24,17 @@ conn.once('open', function() {
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(cookieParser());
 
-var router = express.Router();
+app.get('/', function(req, res) {
+    res.send("Root Working fine");
+});
 
-
-
-router.route('/carts')
-    .post(function(req, res) {
-        var cart = new Cart();
-        cart.name = req.body.name;
-        cart.price = req.body.price;
-
-        cart.save(function(err) {
-            if (err)
-                res.send(err);
-
-            res.json({ message: 'Item added to cart' });
-        });
-    })
-    .get(function(req, res) {
-        Cart.find(function(err, carts) {
-            if (err)
-                res.send(err);
-
-            res.json(carts);
-        });
-    });
-
-router.route('/carts/:item_id')
-    .get(function(req, res) {
-        Cart.findById(req.params.item_id, function(err, Cart) {
-            if (err)
-                res.send(err);
-            res.json(Cart);
-        });
-    })
-    .put(function(req, res) {
-        Cart.findById(req.params.item_id, function(err, cart) {
-
-            if (err)
-                res.send(err);
-
-            cart.name = req.body.name;
-            cart.price = req.body.price;
-
-           
-            cart.save(function(err) {
-                if (err)
-                    res.send(err);
-
-                res.json({ message: 'Cart updated!' });
-            });
-
-        });
-    })
-    .delete(function(req, res) {
-        Cart.remove({
-            _id: req.params.item_id
-        }, function(err, bear) {
-            if (err)
-                res.send(err);
-
-            res.json({ message: 'Successfully deleted' });
-        });
-    });
-
-app.use('/api', router);
+app.use('/api/carts', cartRouter());
 
 
 var port = process.env.PORT || 8080;
 
-
-
-app.listen(port);
+app.listen(port, function() {
+    console.log("Server Running on " + port);
+});
